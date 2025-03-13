@@ -1,0 +1,101 @@
+---
+title: "Direct Thiaminase Measurement Method"
+author:
+  - name: Drew Porter
+    orcid: 0000-0002-6226-7080
+    corresponding: true
+    email: dporter13@alaska.edu
+    affiliations: 
+      - University of Alaska Fairbanks
+  - name: Cody Pinger
+    orcid: 0000-0003-0636-828X
+    affiliations:
+      - National Marine Fisheries Service
+keywords: 
+  - Thiamine
+  - Thiaminase
+  - Forage Fish
+  - Alaska
+abstract: 
+  Lorem ipsum odor amet, consectetuer adipiscing elit. Mattis torquent convallis platea consequat dictumst. Cubilia vitae imperdiet netus nisi aliquam pharetra imperdiet. Ligula eros aliquam fames morbi sed, conubia parturient. Semper nascetur mollis, finibus in integer morbi. Orci a montes mauris inceptos urna.
+plain-language-summary: 
+  Lorem ipsum odor amet, consectetuer adipiscing elit. Mattis torquent convallis platea consequat dictumst.
+date: last-modified
+bibliography: references.bib
+csl: angewandte-chemie.csl
+number-sections: true
+format:
+  html:
+    toc: true
+    number-sections: true
+    theme: cosmo
+  pdf:
+    number-sections: true
+    include-in-header:
+      text: |
+        \newcommand{\rateunit}{$nmol \ Tg^{-1} \ min^{-1}$}
+  docx:
+    number-sections: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(here, quietly = TRUE)
+library(tidyverse, quietly = TRUE)
+
+# Define rateunit
+rateunit <- "nmol g$^{-1}$ min$^{-1}$"
+
+```
+
+## Introduction
+
+```{r}
+#| label: load-lod-values
+
+ten_min_lod <- read_rds(here("data", "processed", "lod", "ten_min_lod.rds"))
+thirty_min_lod <- read_rds(here("data", "processed", "lod", "thirty_min_lod.rds"))
+lod_paired_p_val <- read_rds(here("data/processed/lod/lod_paired_p_val.rds"))
+
+```
+
+The ten minute detection limit was `r round(ten_min_lod, 2)` `r rateunit`
+
+The thirty minute detection limit was `r round(thirty_min_lod, 2)`
+
+## Methods
+
+{{< embed notebooks/determine-detection-limit.qmd#fig-lod-boxplot >}}
+
+as you can see in @fig-lod-boxplot
+
+{{< embed notebooks/hplc_chromatogram.qmd#fig-chromatogram-panel >}}
+
+$$
+-1 \times \frac{\text{nmol Thiamine}_{\text{Final}} - \text{nmol Thiamine}_{\text{Initial}}}{(\text{Time}_{\text{Final}} - \text{Time}_{\text{Initial}}) \times 0.01 \text{ g Fish}}\
+$$ {#eq-direct-thiaminase}
+
+$$
+v = \frac{V_{max} [S]}{K_m + [S]}
+$$ {#eq-michaelis-menten}
+
+$$
+v = \frac{V_{max} [S]^n}{K_{half}^n + [S]^n}
+$$ {#eq-hills}
+
+@eq-direct-thiaminase
+
+@hanes_assay_2007
+
+@kraft_rapid_2014
+
+## Results and Discussion
+
+## Conclusion
+
+## References {.unnumbered}
+
+::: {#refs}
+:::
