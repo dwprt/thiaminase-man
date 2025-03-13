@@ -28,12 +28,6 @@ jobs:
             any::patchwork
             any::tidyverse
             any::here
-            # Add any other R packages your project needs here, one per line.
-            #  e.g., any::ggplot2
-            #        any::dplyr
-            # For packages from CRAN, use 'any::'
-            # For packages from Bioconductor, use 'bioc::'
-            # For specific versions:  'any::dplyr@1.0.0'
           cache-version: 1 # add cache to make installation faster
 
       - name: Render Quarto project
