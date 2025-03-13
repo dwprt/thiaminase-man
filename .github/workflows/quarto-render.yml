@@ -29,6 +29,9 @@ jobs:
             any::tidyverse
             any::here
           cache-version: 1 # add cache to make installation faster
+          
+      - name: Install TinyTeX
+        uses: r-lib/actions/setup-tinytex@v2
 
       - name: Render Quarto project
         uses: quarto-dev/quarto-actions/render@v2  # Run 'quarto render'.
