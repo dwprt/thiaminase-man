@@ -1,0 +1,103 @@
+---
+title: "hplc_chromatogram"
+format: html
+---
+
+```{r}
+#| label: setup
+
+library(here)
+library(tidyverse)
+library(patchwork)
+
+point_size <- 4
+text_size <- 18
+annotation_size <- text_size / 2.845276
+jitter_width <- 0.25
+jitter_height <- 0
+fig_width <- 6.5
+fig_height <- fig_width / (4/3)
+dpi <- 300
+
+my_theme <- theme_classic() +
+  theme(text = element_text(size = text_size))
+
+```
+
+Read in chromatogram data:
+```{r}
+#| label: load-data
+
+hplc <- read_csv(
+  file = here("data", "raw", "chromatogram", "hplc_thiamine_chromatogram.csv"),
+  col_types = "ddff"
+) |> 
+  mutate(
+    species = if_else(str_starts(group, "NIST"), "NIST", "RASM"),
+    species = factor(species)
+    )
+  
+
+nist <- hplc |> 
+  filter(str_starts(group, "NIST"))
+
+rasm <- hplc |> 
+  filter(str_starts(group, "RASM"))
+```
+
+NIST plot:
+```{r}
+#| label: fig-nist-chromatogram
+
+nist_fig <- ggplot(data = nist, aes(x = x, y = y, group = time, color = time)) +
+  geom_line(linewidth = 0.75) +
+  labs(x = "Time (min)",
+       y = "Fluorescence Intensity") +
+  scale_y_continuous(breaks = seq(0, 20, 2), limits = c(0, 20)) +
+  guides(color = "none") +
+  my_theme
+
+nist_fig
+```
+
+RASM plot:
+```{r}
+#| label: fig-rasm-chromatogram
+
+rasm_fig <- ggplot(data = rasm, aes(x = x, y = y, group = time, color = time)) +
+  geom_line(linewidth = 0.75) +
+  labs(x = "Time (min)",
+       y = "Fluorescence Intensity") +
+  scale_y_continuous(breaks = seq(0, 20, 2), limits = c(0, 20)) +
+  my_theme +
+  guides(color = "none") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank())
+
+rasm_fig
+```
+Make them into a 2 panel plot:
+```{r}
+#| label: fig-chromatogram-panel
+
+chromatogram_panel <- nist_fig + rasm_fig + plot_annotation(tag_levels = "A")
+
+chromatogram_panel
+```
+
+Save chromatogram panel:
+```{r}
+#| label: save-chromatogram-panel
+
+ggsave(
+  filename = "chromatogram_panel_plot.png",
+  plot = chromatogram_panel,
+  path = here("output", "figs"),
+  width = fig_width * 2,
+  height = fig_height,
+  units = "in",
+  dpi = dpi
+)
+```

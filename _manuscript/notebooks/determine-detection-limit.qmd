@@ -1,0 +1,212 @@
+---
+title: "Limit of Detection"
+author: Drew Porter
+---
+
+## Introduction
+
+The purpose of this notebook is to determine a method limit of detection using Lake Trout tissue (NIST SRM 1946) for our method of directly quantifying thiaminase activity in fish tissue extracts using a plate reader.
+
+Load libraries:
+
+```{r}
+#| label: setup
+
+library(here)
+library(tidyverse)
+
+point_size <- 4
+text_size <- 18
+annotation_size <- text_size / 2.845276
+jitter_width <- 0.25
+jitter_height <- 0
+fig_width <- 6.5
+fig_height <- fig_width / (4/3)
+dpi <- 300
+
+my_theme <- theme_classic() +
+  theme(text = element_text(size = text_size))
+
+```
+
+## Background
+
+### Why Lake Trout?
+
+We expect Lake Trout to naturally lack thiaminase, this allows us to assess the amount of noise or error inherent in our assay in the absence of thiaminase. Any degradation of thiamine observed during the assay should be attributable to methodological or instrument-related error. This is critical for ensuring that when we do detect thiaminase activity in other samples, the measurement is genuine.
+
+### Sample Handling and Analysis Runs
+
+-   All Lake Trout extracts were prepared from the same frozen NIST homogenate on **January 24, 2025**.
+-   The assay was conducted over three separate days to account for inter-day variability:
+    -   **February 7, 2025:** 6 samples (NIST A–F)
+    -   **February 10, 2025:** 6 samples (NIST G–L)
+    -   **February 11, 2025:** 4 samples (NIST M–P; remaining extract)
+-   Note that one run each on **February 6** and **February 11, 2025** was discarded due to errors in the calibration standards.
+
+## Data Analysis
+
+### Analysis Method
+
+For each run, the absolute difference in thiamine concentration between the paired time points was calculated for each sample. The standard deviation (SD) of these differences was then computed. To establish a conservative threshold for the assay’s noise, we multiplied the SD by 3. This value represents the margin of variation that can be attributed to method error in the absence of thiaminase.
+
+Read in the cleaned limit of detection data:
+
+```{r}
+#| label: read-lod-data
+
+lod_data <- read_csv(
+  here(
+    "data", "processed", "lod", "clean_lod_data.csv"
+    ),
+  col_types = "cDddddddd"
+  )
+
+lod_data_long <- read_csv(
+  here(
+    "data", "processed", "lod", "clean_lod_data_long.csv"
+    ), 
+  col_types = "cfDddd") |> 
+  mutate(time_point = factor(time_point, labels = c("0", "30")))
+```
+
+Calculate the standard deviation of the absolute differences and multiply it by three to establish a conservative threshold:
+
+```{r}
+#| label: calc-sd
+
+nist_lod_sd_times3 <- sd(lod_data$abs_thiamine_difference) * 3
+print(nist_lod_sd_times3)
+
+
+```
+
+Defining fish extract concentration ratios:
+
+```{r}
+#| label: fish-extract-ratios
+
+fish_g <- 1
+buffer_mL <- 2.5
+fish_g_per_buffer_mL = fish_g / buffer_mL
+extract_vol_in_sample_mL <- 25 / 1000
+fish_g_per_sample <- fish_g_per_buffer_mL * extract_vol_in_sample_mL
+
+```
+
+To make our fish extract we always mix `r fish_g` g of homogenized fish tissue with `r buffer_mL` mL phosphate buffer. So, we know there is `r fish_g_per_buffer_mL` g of fish tissue per mL of buffer in the extract. We use 25 $\mu$L of fish extract in our analyses, so we know there is `r fish_g_per_sample` g of fish tissue in each analysis sample.
+
+To convert the calculated absolute difference standard deviation$\times 3$ to a thiaminase activity rate we simply divide the value by the grams of fish in each sample, and by the minutes of time the assay ran for to get thiaminase activity in nmol of thiamine degraded per gram of fish tissue per minute:
+
+```{r}
+#| label: calculate-rates
+
+ten_minute_rate_lod <- nist_lod_sd_times3 / fish_g_per_sample / 10
+print(ten_minute_rate_lod)
+
+thirty_minute_rate_lod <- nist_lod_sd_times3 / fish_g_per_sample / 30
+print(thirty_minute_rate_lod)
+
+```
+
+Saving the LOD values for the manuscript:
+
+```{r}
+#| label: save-lod-values
+
+write_rds(
+  ten_minute_rate_lod,
+  here("data", "processed", "lod", "ten_min_lod.rds")
+)
+
+write_rds(
+  thirty_minute_rate_lod,
+  here("data", "processed", "lod", "thirty_min_lod.rds")
+)
+
+```
+
+### Data Visualization
+
+Here I plot all the NIST LOD data so we can visualize the difference between the readings at each time point:
+
+```{r}
+#| label: fig-lod-boxplot
+#| fig-cap: "Thiamine concentrations in SRM 1946 before and after 30 min incubation show no significant change (paired *t*-test, *p* = 0.36). Different shapes represent measurements from separate analysis days."
+#| fig-alt: "Method limit of detection box plot figure"
+
+lod_plot <- lod_data_long |> 
+  ggplot(aes(x = time_point, y = avg_thiamine)) +
+  geom_boxplot() +
+  geom_jitter(aes(shape = factor(analysis_date)),
+              width = jitter_width, height = jitter_height, size = point_size) +
+  #stat_compare_means(method = "t.test",
+                    # paired = TRUE,
+                    # label.x = 0.75,
+                     #label.y = 10.45,
+                   #  aes(label = paste0("Paired t-test, p = ",
+                                #    after_stat(p.format)))) +
+  scale_y_continuous(limits = c(0, 10.5), breaks = seq(0, 10, 2)) +
+  labs(x = "Nominal Time (min)",
+       y = "[Thiamine nmol]") +
+  guides(shape = "none") +
+  theme_classic() +
+  theme(text = element_text(size = text_size))
+
+lod_plot
+
+```
+
+### Statistical Analysis
+
+The goal here is to perform a paired t-test to determine if the 30 min incubation period caused a change in thiamine concentration in the NIST samples. From the plot, I expect there to be no significant difference.
+
+First I need to make sure we are meeting the assumptions of a paired t-test:
+
+-   The data are continuous (yes)
+
+-   The data values are paired measurements (yes)
+
+-   The pairs are independent of each other (yes)
+
+-   The differences between paired observations are normally distributed (check below)
+
+    ```{r}
+    #| label: normality-test
+
+    # Calculate the differences between paired observations
+    differences <- lod_data$avg_thiamine_t1 - lod_data$avg_thiamine_t0
+
+    # Perform a Shapiro-Wilk normality test on the differences
+    shapiro_test <- shapiro.test(differences)
+    print(shapiro_test)
+    ```
+
+The high p-value of `r round(shapiro_test$p.value, 3)` indicates that the differences are normally distributed and I can proceed with the paired t-test:
+
+```{r}
+#| label: paired-t-test
+
+t_test_result <- t.test(lod_data$avg_thiamine_t0, 
+                        lod_data$avg_thiamine_t1,
+                        paired = TRUE)
+
+print(t_test_result)
+
+
+
+```
+
+Since the p-value (`r round(t_test_result$p.value, 3)`) is much higher than 0.05 and the confidence interval includes zero, we conclude that there is no statistically significant difference between the average thiamine measurements at time 0 and time 1.
+
+Saving t-test p-value for reference in manuscript:
+
+```{r}
+
+lod_paired_p_val <- t_test_result$p.value
+
+write_rds(
+  lod_paired_p_val,
+  file = here("data", "processed", "lod", "lod_paired_p_val.rds")
+)
+```

@@ -1,0 +1,29 @@
+{
+  "index.qmd": {
+    "index.html": "7bf409c7",
+    "index.docx": "2ec67e4f",
+    "index.tex": "0c9cd86d",
+    "index.embed.ipynb": "422415a5",
+    "index.out.ipynb": "9056a1e0",
+    "index-preview.html": "32d22321"
+  },
+  "notebooks/determine-detection-limit.qmd": {
+    "determine-detection-limit-preview.html": "48d81fc6",
+    "determine-detection-limit.embed.ipynb": "a4b87e0b",
+    "determine-detection-limit.out.ipynb": "e4ac645a"
+  },
+  "notebooks/determine-detection-limit.embed.ipynb": {
+    "determine-detection-limit.embed-preview.html": "f2d380aa"
+  },
+  ".quarto/embed/notebooks/determine-detection-limit.embed.ipynb": {
+    "determine-detection-limit.embed-preview.html": "40591658"
+  },
+  "notebooks/hplc_chromatogram.qmd": {
+    "hplc_chromatogram.embed.ipynb": "d21ab87c",
+    "hplc_chromatogram.out.ipynb": "983c31bd",
+    "hplc_chromatogram-preview.html": "18a698f8"
+  },
+  "notebooks/hplc_chromatogram.embed.ipynb": {
+    "hplc_chromatogram.embed-preview.html": "cdb7d0d1"
+  }
+}
