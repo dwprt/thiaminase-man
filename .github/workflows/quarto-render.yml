@@ -1,0 +1,48 @@
+name: Render Quarto Project
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow when pushing to the 'main' branch.  Change if your main branch is different (e.g., 'master').
+
+jobs:
+  render:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu virtual machine.
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3  # Get the code from your GitHub repository.
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2 # Install Quarto CLI.
+
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2  # Install R.
+
+      - name: Install R packages
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::knitr
+            any::rmarkdown
+            any::patchwork
+            any::tidyverse
+            any::here
+            # Add any other R packages your project needs here, one per line.
+            #  e.g., any::ggplot2
+            #        any::dplyr
+            # For packages from CRAN, use 'any::'
+            # For packages from Bioconductor, use 'bioc::'
+            # For specific versions:  'any::dplyr@1.0.0'
+          cache-version: 1 # add cache to make installation faster
+
+      - name: Render Quarto project
+        uses: quarto-dev/quarto-actions/render@v2  # Run 'quarto render'.
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Use a built-in token for authentication.
+          publish_dir: _site  # Deploy the contents of the '_site' directory.  Make sure this is where your Quarto project renders to.
+          # If your project renders to a different directory, change this.  For example, if you have 'output-dir: docs' in your _quarto.yml, change this to 'docs'.
+          
