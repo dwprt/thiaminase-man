@@ -82,7 +82,7 @@ v = \frac{V_{max} [S]}{K_m + [S]}
 $$ {#eq-michaelis-menten}
 
 $$
-v = \frac{V_{max} [S]^n}{K^n + [S]^n}
+v = \frac{V_{max} [S]^n}{K_{half}^n + [S]^n}
 $$ {#eq-hills}
 
 @eq-direct-thiaminase
